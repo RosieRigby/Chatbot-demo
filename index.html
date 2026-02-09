@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #chat { border: 1px solid #ccc; padding: 10px; width: 300px; height: 400px; overflow-y: auto; }
+    #input { width: 240px; }
+    button { width: 50px; }
+    .bot { color: blue; }
+    .user { color: green; text-align: right; }
+  </style>
+</head>
+<body>
+  <h3>Chatbot</h3>
+  <div id="chat"></div>
+  <input id="input" type="text" placeholder="Type...">
+  <button onclick="sendMessage()">Send</button>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const url = "https://script.google.com/macros/s/AKfycbymCPSbwC8WFPFSo_q4LSAdKNBRm2fl3R3h9UWEXxfwg7YVhophQFdieSJrkjkId42G/exec"; // <-- Replace with your Web App URL
+
+    const questions = [
+      "What's your name?",
+      "What's your favorite color?",
+      "Any comments?"
+    ];
+    const answers = {};
+    let currentQuestion = 0;
+
+    function showMessage(message, sender) {
+      const div = document.createElement("div");
+      div.textContent = message;
+      div.className = sender;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("input");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      showMessage(msg, "user");
+
+      const key = currentQuestion === 0 ? "name" :
+                  currentQuestion === 1 ? "color" :
+                  "comment";
+
+      answers[key] = msg;
+      input.value = "";
+      currentQuestion++;
+
+      if (currentQuestion < questions.length) {
+        showMessage(questions[currentQuestion], "bot");
+      } else {
+        showMessage("Thanks! Saving your answers...", "bot");
+
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(answers)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            showMessage("Saved successfully!", "bot");
+          } else {
+            showMessage("Error: " + data.message, "bot");
+          }
+        })
+        .catch(err => showMessage("Fetch error: " + err.message, "bot"));
+      }
+    }
+
+    // Start conversation
+    showMessage(questions[0], "bot");
+  </script>
+</body>
+</html>
